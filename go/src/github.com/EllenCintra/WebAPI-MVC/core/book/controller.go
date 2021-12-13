@@ -1,121 +1,146 @@
 package book
 
 import (
+	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/hyperyuri/webapi-with-go/database"
 	"github.com/hyperyuri/webapi-with-go/database/entity"
 )
 
-func ShowAllBooks(c *gin.Context) {
-	db := database.GetDB()
-	var p []entity.Book
-	err := db.Find(&p).Error
-
-	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot find product by id: " + err.Error(),
-		})
-		return
-	}
-
-	c.JSON(200, p)
+type ControllerBook struct {
+	service IBookService
 }
 
-func ShowBook(c *gin.Context) {
+func NewControllerBook(service IBookService) ControllerBook {
+	return ControllerBook{service: service}
+}
+
+func (s *ControllerBook) ShowAllBooks(c *gin.Context) {
+	books, err := s.service.GetBooks()
+
+	if err != nil {
+		c.JSON(http.StatusNotFound, gin.H{
+			"message": err.Error(),
+		})
+	}
+
+	c.JSON(http.StatusOK, &books)
+}
+
+func (s *ControllerBook) ShowBook(c *gin.Context) {
 	id := c.Param("id")
 	newid, err := strconv.Atoi(id)
 
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be integer",
+		c.JSON(http.StatusBadGateway, gin.H{
+			"error": "Id must be integer",
 		})
 		return
 	}
 
-	db := database.GetDB()
-	var p entity.Book
-	err = db.Find(&p, newid).Error
+	book, err := s.service.GetBook(int64(newid))
 
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot find product by id: " + err.Error(),
+		c.JSON(http.StatusBadGateway, gin.H{
+			"error": "Can not find book by id: " + err.Error(),
 		})
 		return
 	}
 
-	c.JSON(200, p)
+	c.JSON(http.StatusOK, book)
 }
 
-func CreateBook(c *gin.Context) {
-	db := database.GetDB()
-	var p entity.Book
-	err := c.ShouldBindJSON(&p)
+func (s *ControllerBook) CreateBook(c *gin.Context) {
+	var book entity.Book
+	errJson := c.ShouldBindJSON(&book)
 
-	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot bind JSON: " + err.Error(),
+	if errJson != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"error": "cannot bind JSON: " + errJson.Error(),
 		})
 		return
 	}
 
-	err = db.Create(&p).Error
+	newBook, err := s.service.CreateBook(&book)
+
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadGateway, gin.H{
 			"error": "cannot create book: " + err.Error(),
 		})
 		return
 	}
 
-	c.JSON(200, p)
+	c.JSON(http.StatusCreated, newBook)
 }
 
-func DeleteBook(c *gin.Context) {
+func (s *ControllerBook) DeleteBook(c *gin.Context) {
 	id := c.Param("id")
-	newid, err := strconv.Atoi(id)
+	newid, integerErr := strconv.Atoi(id)
 
-	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "ID has to be integer",
+	if integerErr != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"error": "Id must be integer",
 		})
 		return
 	}
 
-	db := database.GetDB()
+	book, getErr := s.service.GetBook(int64(newid))
 
-	err = db.Delete(&entity.Book{}, newid).Error
-
-	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot delete book: " + err.Error(),
+	if getErr != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"error": "Can not find book by id: " + getErr.Error(),
 		})
 		return
 	}
 
-	c.Status(204)
+	deleteErr := s.service.DeleteBook(book)
+
+	if deleteErr != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"error": "cannot delete book: " + deleteErr.Error(),
+		})
+		return
+	}
+
+	c.Status(http.StatusNoContent)
 }
 
-func EditBook(c *gin.Context) {
-	db := database.GetDB()
+func (s *ControllerBook) EditBook(c *gin.Context) {
+	id := c.Param("id")
+	newid, integerErr := strconv.Atoi(id)
 
-	var p entity.Book
+	if integerErr != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"error": "Id must be integer",
+		})
+		return
+	}
 
-	err := c.ShouldBindJSON(&p)
+	book, getErr := s.service.GetBook(int64(newid))
+
+	if getErr != nil {
+		c.JSON(http.StatusBadGateway, gin.H{
+			"error": "Can not find book by id: " + getErr.Error(),
+		})
+		return
+	}
+
+	err := c.ShouldBindJSON(&book)
 	if err != nil {
-		c.JSON(400, gin.H{
+		c.JSON(http.StatusBadGateway, gin.H{
 			"error": "cannot bind JSON: " + err.Error(),
 		})
 		return
 	}
 
-	err = db.Save(&p).Error
+	bookSaved, err := s.service.UpdateBook(book)
 	if err != nil {
-		c.JSON(400, gin.H{
-			"error": "cannot create book: " + err.Error(),
+		c.JSON(http.StatusBadGateway, gin.H{
+			"error": "cannot edit book: " + err.Error(),
 		})
 		return
 	}
 
-	c.JSON(200, p)
+	c.JSON(http.StatusOK, bookSaved)
 }
