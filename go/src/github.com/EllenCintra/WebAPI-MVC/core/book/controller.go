@@ -1,4 +1,4 @@
-package controllers
+package book
 
 import (
 	"strconv"
@@ -36,7 +36,7 @@ func ShowBook(c *gin.Context) {
 
 	db := database.GetDB()
 	var p entity.Book
-	err = db.First(&p, newid).Error
+	err = db.Find(&p, newid).Error
 
 	if err != nil {
 		c.JSON(400, gin.H{
@@ -50,10 +50,9 @@ func ShowBook(c *gin.Context) {
 
 func CreateBook(c *gin.Context) {
 	db := database.GetDB()
-
 	var p entity.Book
-
 	err := c.ShouldBindJSON(&p)
+
 	if err != nil {
 		c.JSON(400, gin.H{
 			"error": "cannot bind JSON: " + err.Error(),

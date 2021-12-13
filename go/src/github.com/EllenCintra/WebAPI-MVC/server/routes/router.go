@@ -2,6 +2,7 @@ package routes
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/hyperyuri/webapi-with-go/core/book"
 )
 
 func ConfigRoutes(router *gin.Engine) *gin.Engine {
@@ -9,11 +10,11 @@ func ConfigRoutes(router *gin.Engine) *gin.Engine {
 	{
 		books := main.Group("books")
 		{
-			books.GET("/:id", bookController.ShowBook)
-			books.GET("/", controllers.ShowBooks)
-			books.POST("/", controllers.CreateBook)
-			books.PUT("/", controllers.UpdateBook)
-			books.DELETE("/:id", controllers.DeleteBook)
+			books.GET("/:id", book.ShowBook)
+			books.GET("/", book.ShowAllBooks)
+			books.POST("/", book.CreateBook)
+			books.PUT("/", book.EditBook)
+			books.DELETE("/:id", book.DeleteBook)
 
 		}
 	}
