@@ -14,5 +14,5 @@ type Book struct {
 	MediumPrice float32   `gorm:"medium_price"`
 	Author      string    `gorm:"author"`
 	ImageURL    string    `gorm:"img_url"`
-	//UserID      int       `gorm:"user_id"`
+	UserID      int       `gorm:"user_id"`
 }

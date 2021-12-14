@@ -1,4 +1,4 @@
-package book
+package user
 
 import (
 	"net/http"
@@ -8,16 +8,16 @@ import (
 	"github.com/hyperyuri/webapi-with-go/database/entity"
 )
 
-type ControllerBook struct {
-	service IBookService
+type ControllerUser struct {
+	service IUserService
 }
 
-func NewControllerBook(service IBookService) ControllerBook {
-	return ControllerBook{service: service}
+func NewControllerUser(service IUserService) ControllerUser {
+	return ControllerUser{service: service}
 }
 
-func (s *ControllerBook) ShowAllBooks(c *gin.Context) {
-	books, err := s.service.GetBooks()
+func (s *ControllerUser) GetUsers(c *gin.Context) {
+	users, err := s.service.GetUsers()
 
 	if err != nil {
 		c.JSON(http.StatusNotFound, gin.H{
@@ -25,10 +25,10 @@ func (s *ControllerBook) ShowAllBooks(c *gin.Context) {
 		})
 	}
 
-	c.JSON(http.StatusOK, &books)
+	c.JSON(http.StatusOK, &users)
 }
 
-func (s *ControllerBook) ShowBook(c *gin.Context) {
+func (s *ControllerUser) GetUser(c *gin.Context) {
 	id := c.Param("id")
 	newid, err := strconv.Atoi(id)
 
@@ -39,21 +39,20 @@ func (s *ControllerBook) ShowBook(c *gin.Context) {
 		return
 	}
 
-	book, err := s.service.GetBook(int64(newid))
-
+	user, err := s.service.GetUser(int64(newid))
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{
-			"error": "Can not find book by id: " + err.Error(),
+			"error": "Can not find user by id: " + err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, book)
+	c.JSON(http.StatusOK, user)
 }
 
-func (s *ControllerBook) CreateBook(c *gin.Context) {
-	var book entity.Book
-	errJson := c.ShouldBindJSON(&book)
+func (s *ControllerUser) CreateUser(c *gin.Context) {
+	var user entity.User
+	errJson := c.ShouldBindJSON(&user)
 
 	if errJson != nil {
 		c.JSON(http.StatusBadGateway, gin.H{
@@ -62,19 +61,19 @@ func (s *ControllerBook) CreateBook(c *gin.Context) {
 		return
 	}
 
-	newBook, err := s.service.CreateBook(&book)
+	newUser, err := s.service.CreateUser(&user)
 
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{
-			"error": "Can not create book: " + err.Error(),
+			"error": "Can not create user: " + err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusCreated, newBook)
+	c.JSON(http.StatusCreated, newUser)
 }
 
-func (s *ControllerBook) DeleteBook(c *gin.Context) {
+func (s *ControllerUser) DeleteUser(c *gin.Context) {
 	id := c.Param("id")
 	newid, integerErr := strconv.Atoi(id)
 
@@ -85,20 +84,20 @@ func (s *ControllerBook) DeleteBook(c *gin.Context) {
 		return
 	}
 
-	book, getErr := s.service.GetBook(int64(newid))
+	user, getErr := s.service.GetUser(int64(newid))
 
 	if getErr != nil {
 		c.JSON(http.StatusBadGateway, gin.H{
-			"error": "Can not find book by id: " + getErr.Error(),
+			"error": "Can not find user by id: " + getErr.Error(),
 		})
 		return
 	}
 
-	deleteErr := s.service.DeleteBook(book)
+	deleteErr := s.service.DeleteUser(user)
 
 	if deleteErr != nil {
 		c.JSON(http.StatusBadGateway, gin.H{
-			"error": "Can not delete book: " + deleteErr.Error(),
+			"error": "Can not delete user: " + deleteErr.Error(),
 		})
 		return
 	}
@@ -106,7 +105,7 @@ func (s *ControllerBook) DeleteBook(c *gin.Context) {
 	c.Status(http.StatusNoContent)
 }
 
-func (s *ControllerBook) EditBook(c *gin.Context) {
+func (s *ControllerUser) EditUser(c *gin.Context) {
 	id := c.Param("id")
 	newid, integerErr := strconv.Atoi(id)
 
@@ -117,16 +116,16 @@ func (s *ControllerBook) EditBook(c *gin.Context) {
 		return
 	}
 
-	book, getErr := s.service.GetBook(int64(newid))
+	user, getErr := s.service.GetUser(int64(newid))
 
 	if getErr != nil {
 		c.JSON(http.StatusBadGateway, gin.H{
-			"error": "Can not find book by id: " + getErr.Error(),
+			"error": "Can not find user by id: " + getErr.Error(),
 		})
 		return
 	}
 
-	err := c.ShouldBindJSON(&book)
+	err := c.ShouldBindJSON(&user)
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{
 			"error": "Can not bind JSON: " + err.Error(),
@@ -134,18 +133,18 @@ func (s *ControllerBook) EditBook(c *gin.Context) {
 		return
 	}
 
-	bookSaved, err := s.service.UpdateBook(book)
+	userSaved, err := s.service.UpdateUser(user)
 	if err != nil {
 		c.JSON(http.StatusBadGateway, gin.H{
-			"error": "Can not edit book: " + err.Error(),
+			"error": "Can not edit user: " + err.Error(),
 		})
 		return
 	}
 
-	c.JSON(http.StatusOK, bookSaved)
+	c.JSON(http.StatusOK, userSaved)
 }
 
-func (s *ControllerBook) ValidationBookId(c *gin.Context) *entity.Book {
+func (s *ControllerUser) ValidationUserId(c *gin.Context) *entity.User {
 	id := c.Param("id")
 	newid, integerErr := strconv.Atoi(id)
 
@@ -156,7 +155,7 @@ func (s *ControllerBook) ValidationBookId(c *gin.Context) *entity.Book {
 		c.Abort() //como parar a solicitação da mesma maneira que o return?
 	}
 
-	book, getErr := s.service.GetBook(int64(newid))
+	user, getErr := s.service.GetUser(int64(newid))
 
 	if getErr != nil {
 		c.JSON(http.StatusBadGateway, gin.H{
@@ -164,5 +163,5 @@ func (s *ControllerBook) ValidationBookId(c *gin.Context) *entity.Book {
 		})
 		c.Abort() //como parar a solicitação da mesma maneira que o return?
 	}
-	return book
+	return user
 }
